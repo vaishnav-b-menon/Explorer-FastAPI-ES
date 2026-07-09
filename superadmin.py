@@ -27,7 +27,6 @@ class AdminData(BaseModel):
     last_name: str
     email_id: str
     role: str
-    is_kantar_employee: bool
     group: Optional[list[str]] = None
     access: Optional[list[Access]] = None
 
@@ -54,6 +53,12 @@ def level(role: str):
         return 0
     else:
         raise HTTPException(status_code=400, detail="Invalid role")
+
+def is_kantar_employee(email_id: str):
+    if email_id.endswith("@kantar.com"):
+        return True
+    else:
+        return False
 
 @app.get("/", status_code=status.HTTP_200_OK)
 def home():
