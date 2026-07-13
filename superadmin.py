@@ -4,6 +4,11 @@ from elasticsearch import Elasticsearch
 from datetime import datetime, timezone
 from typing import Optional
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 
 class Modules(BaseModel):
@@ -30,9 +35,17 @@ class AdminData(BaseModel):
     group: Optional[list[str]] = None
     access: Optional[list[Access]] = None
 
+class AdminDataUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email_id: Optional[str] = None
+    role: Optional[str] = None
+    group: Optional[list[str]] = None
+    access: Optional[list[Access]] = None
 
-username="elastic"
-password="Ds=PF9*ft4dMXZG6794N"
+
+username = os.getenv("ELASTIC_USER")
+password = os.getenv("ELASTIC_PASSWORD")
 
 es = Elasticsearch(
     "https://localhost:9200",
@@ -83,4 +96,36 @@ def get_users():
             "match_all": {}
         }
     )
-    return [hit["_source"] for hit in response["hits"]["hits"]]
+    return [hit for hit in response["hits"]["hits"]]
+
+@app.put("/update_user/{user_id}", status_code=status.HTTP_200_OK)
+def update_user(user_id: str, admin_data: AdminDataUpdate):
+    if not es.exists(index="superadmin", id=user_id):
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    document = admin_data.dict(exclude_unset=True)
+    
+    if "role" in document:
+        document["is_super_admin"] = document["role"] == "super admin"
+        document["level"] = level(document["role"])
+
+    document["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    response = es.update(
+        index="superadmin",
+        id=user_id,
+        doc=document
+    )
+
+    return {"message": "User updated successfully", "response": response, "updated details": document}
+
+@app.delete("/delete_user/{user_id}", status_code=status.HTTP_200_OK)
+def delete_user(user_id: str):
+    # 1. Check if the user exists
+    if not es.exists(index="superadmin", id=user_id):
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # 2. Delete the document from Elasticsearch
+    response = es.delete(index="superadmin", id=user_id)
+
+    return {"message": "User deleted successfully", "response": response}
