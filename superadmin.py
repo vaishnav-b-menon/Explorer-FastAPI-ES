@@ -4,10 +4,21 @@ from elasticsearch import Elasticsearch
 from datetime import datetime, timezone
 from typing import Optional
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv,find_dotenv
 import os
 
+
 load_dotenv()
+username = os.getenv("ELASTIC_USER")
+password = os.getenv("ELASTIC_PASSWORD")
+
+es = Elasticsearch(
+    "https://localhost:9200",
+    basic_auth=(username, password),
+    verify_certs=False,
+)
+
+app= FastAPI()
 
 class Modules(BaseModel):
     SS: bool = True
@@ -41,18 +52,6 @@ class AdminDataUpdate(BaseModel):
     group: Optional[list[str]] = None
     access: Optional[list[Access]] = None
 
-
-username = os.getenv("ELASTIC_USER")
-password = os.getenv("ELASTIC_PASSWORD")
-
-es = Elasticsearch(
-    "https://localhost:9200",
-    basic_auth=(username, password),
-    verify_certs=False,
-)
-
-app= FastAPI()
-
 class Logger:
     def __init__(self, es):
         self.es = es
@@ -66,10 +65,8 @@ class Logger:
             "username": username,
             "status_code": status_code
         }
-        self.es.index(index="logs", document=document)
+        self.es.index(index="log", document=document)
 
-logger = Logger(es)
-app= FastAPI()
 def normalise_role(role: str):
     return "".join(role.split()).lower()
 
@@ -91,7 +88,14 @@ def is_kantar_employee(email_id: str):
     else:
         return False
     
+@app.on_event("startup")
+def startup_event():
+    app.state.logger = Logger(es)
+    app.state.logger.log("INFO", "Startup", "Application Startup", "FastAPI application has started successfully.")
 
+@app.on_event("shutdown")
+def shutdown_event():
+    app.state.logger.log("INFO", "Shutdown", "Application Shutdown", "FastAPI application is shutting down.")
 
 @app.get("/", status_code=status.HTTP_200_OK)
 def home():
@@ -107,6 +111,7 @@ def add_user(admin_data: AdminData):
     document["created_at"] = datetime.now(timezone.utc).isoformat()
     document["updated_at"] = datetime.now(timezone.utc).isoformat()
     response = es.index(index="superadmin", document=document)
+    app.state.logger.log("INFO", "User Management", "Add User", f"User {admin_data.email_id} added successfully.", username="Vaishnav", status_code=201)
     return {"message": "User added successfully", "response": response}
 
 @app.get("/users", status_code=status.HTTP_200_OK)
@@ -120,6 +125,7 @@ def get_users(role: Optional[str] = None):
                 }
             }
         )
+        app.state.logger.log("INFO", "User Management", "Get Users", f"Retrieved users with role {role} successfully.", username="Vaishnav", status_code=200)
     else:
         response = es.search(
             index="superadmin",
@@ -127,17 +133,20 @@ def get_users(role: Optional[str] = None):
                 "match_all": {}
             }
         )
-    return [hit["_source"] for hit in response["hits"]["hits"]]
+        app.state.logger.log("INFO", "User Management", "Get Users", f"Retrieved all users successfully.", username="Vaishnav", status_code=200)
+
+    return [hit for hit in response["hits"]["hits"]]
 
 @app.put("/update_user/{user_id}", status_code=status.HTTP_200_OK)
 def update_user(user_id: str, admin_data: AdminDataUpdate):
     if not es.exists(index="superadmin", id=user_id):
+        app.state.logger.log("ERROR", "User Management", "Update User", f"User {user_id} not found for update.", username="Vaishnav", status_code=404)
         raise HTTPException(status_code=404, detail="User not found")
-    
+        
     document = admin_data.dict(exclude_unset=True)
     
     if "role" in document:
-        document["is_super_admin"] = document["role"] == "super admin"
+        document["is_super_admin"] = document["role"] == "superadmin"
         document["level"] = level(document["role"])
 
     document["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -147,6 +156,7 @@ def update_user(user_id: str, admin_data: AdminDataUpdate):
         id=user_id,
         doc=document
     )
+    app.state.logger.log("INFO", "User Management", "Update User", f"User {user_id} updated successfully.", username="Vaishnav", status_code=200)
 
     return {"message": "User updated successfully", "response": response, "updated details": document}
 
@@ -155,5 +165,20 @@ def delete_user(user_id: str):
     if not es.exists(index="superadmin", id=user_id):
         raise HTTPException(status_code=404, detail="User not found")
     response = es.delete(index="superadmin", id=user_id)
-
+    app.state.logger.log("INFO", "User Management", "Delete User", f"User {user_id} deleted successfully.", username="Vaishnav", status_code=200)
     return {"message": "User deleted successfully", "response": response}
+
+
+@app.get("/logs", status_code=status.HTTP_200_OK)
+def get_logs():
+    response = es.search(
+        index="log",
+        query={
+            "match_all": {}
+        },
+        sort=[
+            {"timestamp": {"order": "desc"}}
+        ]
+    )
+    app.state.logger.log("INFO", "Log Management", "Get Logs", f"Retrieved all logs successfully.", username="Vaishnav", status_code=200)
+    return [hit["_source"] for hit in response["hits"]["hits"]]
