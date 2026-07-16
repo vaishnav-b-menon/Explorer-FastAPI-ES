@@ -200,8 +200,19 @@ def module_validation(level, modules_list=None):
     else:
         return {"message": "Invalid role"}
 
-
-
+def email_check(document:dict):
+    if es.search(
+        index="admin",
+        query={
+            "term":
+            {
+                "email_id.keyword": document["email_id"]
+            }
+        }        
+    ):
+        app.state.logger.log("ERROR", "User Management", "Add User", f"The user with {document["email_id"]} email id already exists", username="Vaishnav", status_code=400)
+        raise HTTPException(status_code=409, detail=f"The user with {document["email_id"]} email id already exists")
+    
 @app.on_event("startup")
 def startup_event():
     app.state.logger = Logger(es)
@@ -218,6 +229,7 @@ def home():
 @app.post("/add_user", status_code=status.HTTP_201_CREATED)
 def add_user(admin_data: AdminData):
     document = admin_data.dict()
+    email_check(document)
     document["is_kantar_employee"] = is_kantar_employee(admin_data.email_id)
     document["level"] = level(normalise_role(admin_data.role))
     document["role"] = normalise_role(admin_data.role)
