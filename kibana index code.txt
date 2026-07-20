@@ -91,3 +91,29 @@ PUT log
     }
   }
 }
+
+# Kibana code for setting index of client database
+PUT client
+{
+  "mappings": {
+    "properties": {
+      "client": {
+        "properties": {
+        "name":{
+          "type":"keyword"
+        },
+        "studies":{
+          "type":"nested",
+          "properties":{
+            "name":{
+              "type":"keyword"
+            },
+            "entrypoints":{
+              "type":"keyword"}
+          }
+        }
+        }
+      }
+    }
+  }
+}
