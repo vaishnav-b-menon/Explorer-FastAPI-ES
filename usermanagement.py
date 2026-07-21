@@ -200,19 +200,21 @@ def module_validation(level, modules_list=None):
     else:
         return {"message": "Invalid role"}
 
-def email_check(document:dict):
-    if es.search(
+def email_check(document: dict):
+    users = es.search(
         index="admin",
         query={
-            "term":
-            {
+            "term": {
                 "email_id.keyword": document["email_id"]
             }
-        }        
-    ):
-        app.state.logger.log("ERROR", "User Management", "Add User", f"The user with {document["email_id"]} email id already exists", username="Vaishnav", status_code=400)
-        raise HTTPException(status_code=409, detail=f"The user with {document["email_id"]} email id already exists")
-    
+        }
+    )
+
+    if users["hits"]["hits"]:
+        app.state.logger.log("ERROR","User Management","Add User",f"The user with {document['email_id']} email id already exists",username="Vaishnav",status_code=409)
+        raise HTTPException(status_code=409,detail=f"The user with {document['email_id']} email id already exists")
+
+
 @app.on_event("startup")
 def startup_event():
     app.state.logger = Logger(es)
