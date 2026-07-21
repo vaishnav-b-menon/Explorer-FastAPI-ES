@@ -333,4 +333,3 @@ def get_clients():
     )
     app.state.logger.log("INFO", "Client Management", "Get Clients", f"Retrieved all clients successfully.", username="Vaishnav", status_code=200)
     return [hit["_source"] for hit in response["hits"]["hits"]]
-
