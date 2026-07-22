@@ -202,7 +202,6 @@ POST testclients/_doc
         "ai_integration": true,
         "select_all_metrics": true
       },
-
       snapshot_config = {
         "product": "Custom",
         "template": "Brand Health- MDS",
@@ -224,10 +223,9 @@ POST testclients/_doc
           "multiple_markets": true,
           "audience_snapshot": true
         },
-
         "snapshot_features": {
           "output_configuration": {
-            "admin_defined": true
+          "admin_defined": true
           },
           "filter_function": {
             "custom_base": false,
