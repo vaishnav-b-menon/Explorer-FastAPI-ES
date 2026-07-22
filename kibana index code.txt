@@ -147,7 +147,102 @@ POST testclients/_doc
         "DU": false,
         "ARK": true
       },
+      "crosstab_config": {
+        "row_2x2": true,
+        "row_nxn": false,
+        "column_2x2": true,
+        "column_nxn": false,
+        "save_load": true,
+        "change_entrypoint": true,
+        "profiling": true,
+        "total_base": true,
+        "answer_base": true,
+        "custom_base": {
+          "enabled": true,
+          "metrics": [""]
+        },
+        "decimal_tabular":"",
+        "decimal_excel":"",
+        "decimal_charts":"",
+        "decimal_ppt":"",
+        "row_column_transpose": true,
+        "indexing": true,
+        "significance_testing": true,
+        "ranking": false,
+        "custom_groups": true,
+        "custom_calculations": true,
+        "custom_reports": true,
+        "static_text": false,
+        "previous_year": true,
+        "previous_period": true,
+        "pairwise": true,
+        "reference": true,
+        "confidence_levels":{
+          "90%": true,
+          "95%": true,
+          "98%": true,
+          "99%": true
+        },
+        "document_repository": {
+          "folder": "",
+          "file": "",
+          "new_file": ""
+        },
+        "study_um": true,
+        "entrypoint_um": true,
+        "dimension_um": false,
+        "reset_selection": true,
+        "chart_visualization": true,
+        "distinct": false,
+        "help_guide": true,
+        "tooltip_fom": true,
+        "column_row_percentage": true,
+        "story_board": true,
+        "ai_integration": true,
+        "select_all_metrics": true
+      }
+    }
+  }
+}
 
+
+POST testclients/_doc
+{
+  "Demo": {
+    "Brand Health Tracker": {
+      "respondent_config":{
+        "entrypoint_1":"",
+        "entrypoint_2":"",
+        "entrypoint_3":"",
+        "week":"",
+        "month":"",
+        "quarter":"",
+        "year":"",
+        "respondent_serial":"",
+        "dimension_1":"",
+        "dimension_2":"",
+        "dimension_3":"",
+        "weight_1":"",
+        "weight_2":"",
+        "weight_3":"",
+        "boostfactor":"",
+        "unweighted":true
+      },
+      "aggregated_config":{
+        "value":"",
+        "weighted_base":"",
+        "sample_size":"",
+        "kpi":""
+      },
+      "insufficient_base":"",
+      "low_base":"",
+      "threshold":"",
+      "tpf":true,
+      "modules": {
+        "Alert": true,
+        "DU": false,
+        "ARK": true
+      },
       "crosstab_config": {
         "row_2x2": true,
         "row_nxn": false,
@@ -202,10 +297,9 @@ POST testclients/_doc
         "ai_integration": true,
         "select_all_metrics": true
       },
-      snapshot_config = {
+      "snapshot_config" :{
         "product": "Custom",
         "template": "Brand Health- MDS",
-
         "snapshot_name": "3 Widget - Testing",
         "study_names": ["Brand Health Tracker"],
         "document_repository": {
@@ -247,7 +341,6 @@ POST testclients/_doc
             "dimension": false
           }
         },
-
         "comparison_points": {
           "previous_year": true,
           "previous_period": true,
@@ -269,7 +362,6 @@ POST testclients/_doc
           "non_editable_ppt": true,
           "excel_export": true
         },
-
         "flags": {
           "ranking": false,
           "sticky_selection": false,
@@ -278,13 +370,10 @@ POST testclients/_doc
           "ai_integration": true,
           "entry_points_multi_select": true
         },
-
-        "widget_library": {},
-        "additional_configuration": {},
-        "topics": {},
-
-      }
-
+        "widget_library": "",
+        "additional_configuration": "",
+        "topics": ""
+      },
       "brandanalysis_config": {
         "row_2x2": true,
         "row_nxn": false,
@@ -311,7 +400,6 @@ POST testclients/_doc
         "custom_calculations": true,
         "custom_reports": true,
         "static_text": false,
-
         "previous_year": true,
         "previous_period": true,
         "pairwise": true,
@@ -322,7 +410,6 @@ POST testclients/_doc
           "98%": true,
           "99%": true
         },
-
         "document_repository": {
           "folder": "",
           "file": "",
@@ -340,7 +427,7 @@ POST testclients/_doc
         "story_board": true,
         "ai_integration": true,
         "select_all_metrics": true
-      },
+      }
     }
   }
 }
