@@ -1,9 +1,8 @@
 from fastapi import FastAPI, status, Response, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 from elasticsearch import Elasticsearch
 from datetime import datetime, timezone
 from typing import Optional
-
 from dotenv import load_dotenv,find_dotenv
 import os
 
@@ -56,9 +55,113 @@ class studies(BaseModel):
     name: str
     entrypoints: Optional[list[str]]
 
-class ClientData(BaseModel):
-    name: str
-    studies: Optional[list[studies]]
+
+class RespondentConfig(BaseModel):
+    entrypoint_1: str = ""
+    entrypoint_2: str = ""
+    entrypoint_3: str = ""
+    week: str = ""
+    month: str = ""
+    quarter: str = ""
+    year: str = ""
+    respondent_serial: str = ""
+    dimension_1: str = ""
+    dimension_2: str = ""
+    dimension_3: str = ""
+    weight_1: str = ""
+    weight_2: str = ""
+    weight_3: str = ""
+    boostfactor: str = ""
+    unweighted: bool = True
+
+
+class AggregatedConfig(BaseModel):
+    value: str
+    weighted_base: str
+    sample_size: str
+    kpi: str
+
+
+class Modules(BaseModel):
+    Alert: bool
+    DU: bool
+    ARK: bool
+
+
+class CustomBase(BaseModel):
+    enabled: bool
+    metrics: list[str]
+
+
+class ConfidenceLevels(BaseModel):
+    level_90: bool 
+    level_95: bool 
+    level_98: bool 
+    level_99: bool
+
+
+class DocumentRepository(BaseModel):
+    folder: str
+    file: str
+    new_file: str
+
+
+class AnalysisConfig(BaseModel):
+    row_2x2: bool = True
+    row_nxn: bool = False
+    column_2x2: bool = True
+    column_nxn: bool = False
+    save_load: bool
+    change_entrypoint: bool
+    profiling: bool
+    total_base: bool = True
+    answer_base: bool
+    custom_base: CustomBase
+    decimal_tabular: str
+    decimal_excel: str
+    decimal_charts: str
+    decimal_ppt: str
+    row_column_transpose: bool
+    indexing: bool
+    significance_testing: bool
+    ranking: bool
+    custom_groups: bool
+    custom_calculations: bool
+    custom_reports: bool
+    static_text: bool
+    previous_year: bool
+    previous_period: bool
+    pairwise: bool
+    reference: bool
+    confidence_levels: ConfidenceLevels
+    document_repository: DocumentRepository
+    study_um: bool
+    entrypoint_um: bool
+    dimension_um: bool
+    reset_selection: bool
+    chart_visualization: bool
+    distinct: bool
+    help_guide: bool
+    tooltip_fom: bool
+    column_row_percentage: bool
+    story_board: bool
+    ai_integration: bool
+    select_all_metrics: bool
+
+class StudyConfig(BaseModel):
+    respondent_config: RespondentConfig
+    aggregated_config: AggregatedConfig
+    insufficient_base: str
+    low_base: str
+    threshold: str
+    tpf: bool
+    modules: Modules
+    crosstab_config: Optional[AnalysisConfig]
+    brandanalysis_config: Optional[AnalysisConfig]
+
+class ConfigModel(RootModel):
+    root: dict[str, dict[str, StudyConfig]]
+
 
 class Logger:
     def __init__(self, es):
@@ -319,16 +422,16 @@ def get_logs():
 
 
 @app.post("/add_client", status_code=status.HTTP_200_OK)
-def add_client(client_data: ClientData):
-    document = client_data.dict()
-    response = es.index(index="client", document=document)
-    app.state.logger.log("INFO", "Client Management", "Add Client", f"Client {document['name']} added successfully.", username="Vaishnav", status_code=201)
+def add_client(client_data: ConfigModel):
+    document = client_data.model_dump()
+    response = es.index(index="clients", document=document)
+    app.state.logger.log("INFO", "Client Management", "Add Client", "Client added successfully.", username="Vaishnav", status_code=201)
     return {"message": "Client added successfully", "response": response}
 
 @app.get("/clients", status_code=status.HTTP_200_OK)
 def get_clients():
     response = es.search(
-        index="client",
+        index="clients",
         query={
             "match_all": {}
         }
